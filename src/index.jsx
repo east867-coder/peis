@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI, Type } from "google/generative-ai";
 
 // --- 常量与初始数据 ---
 
@@ -32,8 +32,7 @@ const ROLE_PERMISSIONS = {
 
 // --- 工具函数 ---
 
-// Fix: Add optional second parameter to satisfy unexpected multiple-argument calls or shadowing
-const formatCurrency = (amount, locale = 'zh-CN') =>`¥${Number(amount).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const formatCurrency = (amount, locale = 'zh-CN') => `¥${Number(amount).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const formatDate = (ts) => new Date(ts).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 
 const handleCapturePhoto = (multiple = false) => {
@@ -44,8 +43,8 @@ const handleCapturePhoto = (multiple = false) => {
     if (multiple) input.multiple = true;
     input.setAttribute('capture', 'environment');
     input.onchange = async (e) => {
-      // Fix: Cast e.target to HTMLInputElement to access .files
-      const files = e.target.files;
+      const target = e.target;
+      const files = target.files;
       if (!files || files.length === 0) {
         resolve(null);
         return;
@@ -54,7 +53,7 @@ const handleCapturePhoto = (multiple = false) => {
       const readAsDataURL = (file) => {
         return new Promise((res) => {
           const reader = new FileReader();
-          reader.onload = (ev) => res(ev.target?.result);
+          reader.onload = (ev) => res(ev.target.result);
           reader.readAsDataURL(file);
         });
       };
@@ -144,12 +143,12 @@ const App = () => {
   const [currentUser, setCurrentUser] = useState(DEFAULT_USERS[0]);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [ingredients, setIngredients] = useState(INITIAL_MATERIALS);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState(INITIAL_CUSTOMERS);
   const [users, setUsers] = useState(DEFAULT_USERS);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState('');
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedItem, setSelectedItem] = useState(null);
   const [isAiScanning, setIsAiScanning] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -157,7 +156,7 @@ const App = () => {
   const [authError, setAuthError] = useState(false);
   const [aiPasteText, setAiPasteText] = useState('');
   const [showAiTextInput, setShowAiTextInput] = useState(false);
-  const [tempPhotos, setTempPhotos] = useState<any[]>([]);
+  const [tempPhotos, setTempPhotos] = useState([]);
 
   useEffect(() => {
     try {
@@ -177,11 +176,10 @@ const App = () => {
     localStorage.setItem('sc_orders', JSON.stringify(orders));
     localStorage.setItem('sc_customers', JSON.stringify(customers));
     localStorage.setItem('sc_users', JSON.stringify(users));
-    // Fix: Cast window to any to access lucide global
-    if ((window as any).lucide) (window as any).lucide.createIcons();
+    if (window.lucide) window.lucide.createIcons();
   }, [ingredients, orders, customers, users, activeTab, isModalOpen]);
 
-  const handleOpenModal = (type, data?) => {
+  const handleOpenModal = (type, data) => {
     setModalType(type);
     setSelectedItem(data || null);
     setShowAiTextInput(false);
@@ -220,7 +218,7 @@ const App = () => {
     setTempPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
-  const processWithAi = async (input: { photo?: string; text?: string }) => {
+  const processWithAi = async (input) => {
     setIsAiScanning(true);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -230,8 +228,7 @@ const App = () => {
       2. 如果是手写或不清晰的文字，请基于食材常识进行推断修正。
       3. 输出格式必须是 JSON 数组。`;
 
-      // Fix: Use any[] to avoid strict inference mismatch for Parts
-      const contentsParts: any[] = [{ text: prompt }];
+      const contentsParts = [{ text: prompt }];
       if (input.photo) {
         contentsParts.push({ inlineData: { mimeType: 'image/jpeg', data: input.photo.split(',')[1] } });
       } else if (input.text) {
@@ -276,8 +273,7 @@ const App = () => {
   };
 
   const saveOrderAction = useCallback((type, orderData) => {
-    // Fix: Initialize newOrder with type any or explicit customerId optionality
-    const newOrder: any = {
+    const newOrder = {
       id: `${type}${Date.now().toString().slice(-6)}`,
       type,
       date: Date.now(),
@@ -492,17 +488,17 @@ const App = () => {
                     <form onSubmit={e => {
                        e.preventDefault();
                        const fd = new FormData(e.currentTarget);
-                       const items: any[] = [];
+                       const items = [];
                        const names = fd.getAll('item_name');
                        const amounts = fd.getAll('item_amount');
                        const units = fd.getAll('item_unit');
                        const prices = fd.getAll('item_price');
-                       names.forEach((n, i) => { if (n) items.push({ id: Math.random().toString(), name: n as string, quantity: parseFloat(amounts[i] as string) || 0, unit: (units[i] as string) || 'kg', price: parseFloat(prices[i] as string) || 0 }); });
+                       names.forEach((n, i) => { if (n) items.push({ id: Math.random().toString(), name: n, quantity: parseFloat(amounts[i]) || 0, unit: units[i] || 'kg', price: parseFloat(prices[i]) || 0 }); });
                        saveOrderAction(modalType === 'order_in' ? 'IN' : 'OUT', {
-                          customerId: fd.get('customerId') as string,
+                          customerId: fd.get('customerId'),
                           items,
                           totalAmount: items.reduce((acc, cur) => acc + (cur.price * cur.quantity), 0),
-                          note: fd.get('note') as string,
+                          note: fd.get('note'),
                           photos: tempPhotos,
                           shouldPrint: fd.get('shouldPrint') === 'true'
                        });
@@ -547,8 +543,8 @@ const App = () => {
                        </div>
                        <input type="hidden" name="shouldPrint" id="shouldPrintInput" value="false" />
                        <div className="flex gap-2 pt-4">
-                          <button type="submit" onClick={() => { (document.getElementById('shouldPrintInput') as HTMLInputElement).value = 'false' }} className="flex-1 py-4 bg-slate-800 rounded-2xl text-xs font-black uppercase text-slate-400">仅存入库</button>
-                          <button type="submit" onClick={() => { (document.getElementById('shouldPrintInput') as HTMLInputElement).value = 'true' }} className="flex-1 py-4 bg-indigo-600 rounded-2xl text-xs font-black uppercase text-white shadow-lg active:scale-95 transition-all">保存打印</button>
+                          <button type="submit" onClick={() => { document.getElementById('shouldPrintInput').value = 'false' }} className="flex-1 py-4 bg-slate-800 rounded-2xl text-xs font-black uppercase text-slate-400">仅存入库</button>
+                          <button type="submit" onClick={() => { document.getElementById('shouldPrintInput').value = 'true' }} className="flex-1 py-4 bg-indigo-600 rounded-2xl text-xs font-black uppercase text-white shadow-lg active:scale-95 transition-all">保存打印</button>
                        </div>
                     </form>
                  </div>
@@ -574,11 +570,11 @@ const App = () => {
                     e.preventDefault();
                     const fd = new FormData(e.currentTarget);
                     const data = { 
-                      name: fd.get('name') as string, 
-                      category: fd.get('category') as string, 
-                      unit: fd.get('unit') as string, 
-                      currentStock: parseFloat(fd.get('stock') as string) || 0, 
-                      minStock: parseFloat(fd.get('min') as string) || 0 
+                      name: fd.get('name'), 
+                      category: fd.get('category'), 
+                      unit: fd.get('unit'), 
+                      currentStock: parseFloat(fd.get('stock')) || 0, 
+                      minStock: parseFloat(fd.get('min')) || 0 
                     };
                     if (selectedItem) setIngredients(prev => prev.map(i => i.id === selectedItem.id ? { ...i, ...data } : i));
                     else setIngredients(prev => [...prev, { id: Date.now().toString(), code: `V${Date.now().toString().slice(-3)}`, ...data }]);
@@ -605,9 +601,9 @@ const App = () => {
                     e.preventDefault();
                     const fd = new FormData(e.currentTarget);
                     const data = { 
-                      name: fd.get('name') as string, 
-                      phone: fd.get('phone') as string, 
-                      address: fd.get('address') as string, 
+                      name: fd.get('name'), 
+                      phone: fd.get('phone'), 
+                      address: fd.get('address'), 
                       lat: selectedItem?.lat, 
                       lng: selectedItem?.lng 
                     };
@@ -635,7 +631,7 @@ const App = () => {
               {modalType === 'settlement' && selectedItem && (
                  <form onSubmit={e => {
                     e.preventDefault();
-                    const amount = parseFloat(new FormData(e.currentTarget).get('amount') as string) || 0;
+                    const amount = parseFloat(new FormData(e.currentTarget).get('amount')) || 0;
                     if (amount > 0) { setCustomers(prev => prev.map(c => c.id === selectedItem.id ? { ...c, totalDebt: c.totalDebt - amount } : c)); setIsModalOpen(false); }
                  }} className="space-y-6 text-center">
                     <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-400"><i data-lucide="wallet" className="w-10 h-10"></i></div>
@@ -650,9 +646,9 @@ const App = () => {
                     e.preventDefault();
                     const fd = new FormData(e.currentTarget);
                     const data = { 
-                      name: fd.get('name') as string, 
-                      role: fd.get('role') as string, 
-                      password: fd.get('password') as string 
+                      name: fd.get('name'), 
+                      role: fd.get('role'), 
+                      password: fd.get('password') 
                     };
                     if (selectedItem) setUsers(prev => prev.map(u => u.id === selectedItem.id ? { ...u, ...data } : u));
                     else setUsers(prev => [...prev, { id: Date.now().toString(), ...data }]);
@@ -714,5 +710,5 @@ const App = () => {
   );
 };
 
-const root = createRoot(document.getElementById('root')!);
+const root = createRoot(document.getElementById('root'));
 root.render(<App />);
