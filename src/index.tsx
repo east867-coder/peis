@@ -63,9 +63,6 @@ const CATEGORIES = ['全部', '蔬菜', '肉类', '海鲜', '调料', '主食', 
 
 const INITIAL_MATERIALS = [
   { id: 'v1', code: 'V001', name: '土豆', category: '蔬菜', unit: 'kg', currentStock: 25, minStock: 10 },
-  { id: 'm1', code: 'M001', name: '猪五花', category: '肉类', unit: 'kg', currentStock: 15, minStock: 5 },
-  { id: 's1', code: 'S001', name: '生抽', category: '调料', unit: '瓶', currentStock: 8, minStock: 2 },
-];
 
 const INITIAL_CUSTOMERS: Customer[] = [
   { id: 'c1', name: '四季火锅店', phone: '13800138001', address: '创业路 88 号', totalDebt: 12500, lat: 31.2304, lng: 121.4737 },
