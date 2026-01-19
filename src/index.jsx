@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
-import { GoogleGenAI, Type } from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // --- 常量与初始数据 ---
 
@@ -33,8 +33,8 @@ const ROLE_PERMISSIONS = {
 // --- 工具函数 ---
 
 // Fix: Add optional second parameter to satisfy unexpected multiple-argument calls or shadowing
-const formatCurrency = (amount: any, locale: string = 'zh-CN') => `¥${Number(amount).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const formatDate = (ts: any) => new Date(ts).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+const formatCurrency = (amount, locale = 'zh-CN') =>`¥${Number(amount).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const formatDate = (ts) => new Date(ts).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 
 const handleCapturePhoto = (multiple = false) => {
   return new Promise((resolve) => {
