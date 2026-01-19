@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
-import { GoogleGenAI, Type } from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // --- 常量与初始数据 ---
 
