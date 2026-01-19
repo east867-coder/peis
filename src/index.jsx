@@ -45,7 +45,7 @@ const handleCapturePhoto = (multiple = false) => {
     input.setAttribute('capture', 'environment');
     input.onchange = async (e) => {
       // Fix: Cast e.target to HTMLInputElement to access .files
-      const files = (e.target as HTMLInputElement).files;
+      const files = e.target.files;
       if (!files || files.length === 0) {
         resolve(null);
         return;
