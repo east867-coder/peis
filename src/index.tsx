@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
-import { GoogleGenAI, Type } from "@google/generative-ai";
+import { GoogleGenAI, Type } from "@google/generative-ai"";
 
 // --- 常量与初始数据 ---
 
@@ -23,7 +23,7 @@ const DEFAULT_USERS = [
   { id: 'u2', name: '王师傅', role: '送货员', password: '222' },
 ];
 
-const ROLE_PERMISSIONS: any = {
+const ROLE_PERMISSIONS = {
   'Admin': ['dashboard', 'inventory', 'customer', 'inbound', 'outbound', 'user_mgmt'],
   '老板': ['dashboard', 'inventory', 'customer', 'inbound', 'outbound'],
   '采购员': ['dashboard', 'inventory', 'inbound'],
@@ -32,9 +32,9 @@ const ROLE_PERMISSIONS: any = {
 
 // --- 工具函数 ---
 
-// Added explicit types to parameters to avoid potential global shadowing or inference issues causing "Expected 2 arguments" errors
-const formatCurrency = (amount: number) => `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const formatDate = (ts: number) => new Date(ts).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+// Fix: Add optional second parameter to satisfy unexpected multiple-argument calls or shadowing
+const formatCurrency = (amount: any, locale: string = 'zh-CN') => `¥${Number(amount).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const formatDate = (ts: any) => new Date(ts).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 
 const handleCapturePhoto = (multiple = false) => {
   return new Promise((resolve) => {
@@ -44,14 +44,14 @@ const handleCapturePhoto = (multiple = false) => {
     if (multiple) input.multiple = true;
     input.setAttribute('capture', 'environment');
     input.onchange = async (e) => {
-      // Cast EventTarget to HTMLInputElement to access .files
+      // Fix: Cast e.target to HTMLInputElement to access .files
       const files = (e.target as HTMLInputElement).files;
       if (!files || files.length === 0) {
         resolve(null);
         return;
       }
       
-      const readAsDataURL = (file: File) => {
+      const readAsDataURL = (file) => {
         return new Promise((res) => {
           const reader = new FileReader();
           reader.onload = (ev) => res(ev.target?.result);
@@ -71,7 +71,7 @@ const handleCapturePhoto = (multiple = false) => {
   });
 };
 
-const openNavigation = (customer: any, type: string) => {
+const openNavigation = (customer, type) => {
   const { address, name, lat, lng } = customer;
   let url = '';
   if (type === 'amap') {
@@ -88,9 +88,9 @@ const openNavigation = (customer: any, type: string) => {
 
 // --- 子组件: 订单详情 ---
 
-const OrderDetailView = ({ order, customers, users, onPrint }: any) => {
-  const customer = customers.find((c: any) => c.id === order.customerId);
-  const operator = users.find((u: any) => u.id === order.operatorId);
+const OrderDetailView = ({ order, customers, users, onPrint }) => {
+  const customer = customers.find((c) => c.id === order.customerId);
+  const operator = users.find((u) => u.id === order.operatorId);
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start">
@@ -112,7 +112,7 @@ const OrderDetailView = ({ order, customers, users, onPrint }: any) => {
                <tr><th className="px-4 py-2.5">品名</th><th className="px-4 py-2.5">数量</th><th className="px-4 py-2.5 text-right">小计</th></tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-               {order.items.map((item: any) => (
+               {order.items.map((item) => (
                   <tr key={item.id}><td className="px-4 py-3 font-bold">{item.name}</td><td className="px-4 py-3 text-slate-400">{item.quantity}{item.unit} × {item.price}</td><td className="px-4 py-3 text-right font-mono font-bold text-indigo-400">{formatCurrency(item.quantity * item.price)}</td></tr>
                ))}
             </tbody>
@@ -124,7 +124,7 @@ const OrderDetailView = ({ order, customers, users, onPrint }: any) => {
         <div className="space-y-3">
            <h4 className="text-[10px] text-slate-500 font-black uppercase tracking-widest px-1">原始单据留底 ({order.photos.length})</h4>
            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-              {order.photos.map((img: string, i: number) => (
+              {order.photos.map((img, i) => (
                 <div key={i} className="shrink-0 w-24 h-24 rounded-xl overflow-hidden glass border border-white/5 shadow-lg">
                   <img src={img} className="w-full h-full object-cover cursor-pointer hover:scale-110 transition-transform" onClick={() => window.open(img)} />
                 </div>
@@ -157,7 +157,7 @@ const App = () => {
   const [authError, setAuthError] = useState(false);
   const [aiPasteText, setAiPasteText] = useState('');
   const [showAiTextInput, setShowAiTextInput] = useState(false);
-  const [tempPhotos, setTempPhotos] = useState<string[]>([]);
+  const [tempPhotos, setTempPhotos] = useState<any[]>([]);
 
   useEffect(() => {
     try {
@@ -177,11 +177,11 @@ const App = () => {
     localStorage.setItem('sc_orders', JSON.stringify(orders));
     localStorage.setItem('sc_customers', JSON.stringify(customers));
     localStorage.setItem('sc_users', JSON.stringify(users));
-    // Access lucide safely via any cast on window
+    // Fix: Cast window to any to access lucide global
     if ((window as any).lucide) (window as any).lucide.createIcons();
   }, [ingredients, orders, customers, users, activeTab, isModalOpen]);
 
-  const handleOpenModal = (type: string, data?: any) => {
+  const handleOpenModal = (type, data?) => {
     setModalType(type);
     setSelectedItem(data || null);
     setShowAiTextInput(false);
@@ -196,7 +196,7 @@ const App = () => {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        setSelectedItem((prev: any) => ({ ...prev, lat: latitude, lng: longitude }));
+        setSelectedItem((prev) => ({ ...prev, lat: latitude, lng: longitude }));
         setIsGettingLocation(false);
       },
       (err) => { alert("获取位置失败: " + err.message); setIsGettingLocation(false); },
@@ -216,7 +216,7 @@ const App = () => {
     }
   };
 
-  const removePhoto = (index: number) => {
+  const removePhoto = (index) => {
     setTempPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
@@ -230,7 +230,7 @@ const App = () => {
       2. 如果是手写或不清晰的文字，请基于食材常识进行推断修正。
       3. 输出格式必须是 JSON 数组。`;
 
-      // Define parts with any type to allow mixed text and inlineData
+      // Fix: Use any[] to avoid strict inference mismatch for Parts
       const contentsParts: any[] = [{ text: prompt }];
       if (input.photo) {
         contentsParts.push({ inlineData: { mimeType: 'image/jpeg', data: input.photo.split(',')[1] } });
@@ -261,7 +261,7 @@ const App = () => {
 
       const items = JSON.parse(response.text || '[]');
       if (items.length > 0) {
-        setSelectedItem((prev: any) => ({ ...prev, items: [...(prev?.items || []), ...items] }));
+        setSelectedItem((prev) => ({ ...prev, items: [...(prev?.items || []), ...items] }));
         setShowAiTextInput(false);
         setAiPasteText('');
       } else {
@@ -275,8 +275,8 @@ const App = () => {
     }
   };
 
-  const saveOrderAction = useCallback((type: string, orderData: any) => {
-    // Explicitly type newOrder as any to allow dynamic property addition (customerId)
+  const saveOrderAction = useCallback((type, orderData) => {
+    // Fix: Initialize newOrder with type any or explicit customerId optionality
     const newOrder: any = {
       id: `${type}${Date.now().toString().slice(-6)}`,
       type,
@@ -291,10 +291,9 @@ const App = () => {
     setOrders(prev => [newOrder, ...prev]);
     setIngredients(prev => {
       const next = [...prev];
-      newOrder.items.forEach((item: any) => {
+      newOrder.items.forEach((item) => {
         const idx = next.findIndex(i => i.name.trim() === item.name.trim());
         if (idx > -1) { next[idx] = { ...next[idx], currentStock: type === 'IN' ? next[idx].currentStock + item.quantity : next[idx].currentStock - item.quantity }; }
-        // Added required 'code' property when creating new ingredient
         else if (type === 'IN') { next.push({ id: Math.random().toString(), code: `V${Date.now().toString().slice(-3)}`, name: item.name, category: '其他', unit: item.unit, currentStock: item.quantity, minStock: 5 }); }
       });
       return next;
@@ -313,7 +312,7 @@ const App = () => {
     return { todayIn, todayOut, totalDebt, lowStock };
   }, [orders, customers, ingredients]);
 
-  const allowedTabs: string[] = ROLE_PERMISSIONS[currentUser.role];
+  const allowedTabs = ROLE_PERMISSIONS[currentUser.role];
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#0b1120] text-slate-200">
@@ -426,7 +425,7 @@ const App = () => {
            <div className="space-y-6 animate-in slide-in-from-right-10">
               <div className="relative"><i data-lucide="search" className="absolute left-4 top-4 w-4 h-4 text-slate-600"></i><input className="w-full bg-slate-900 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-xs outline-none focus:border-indigo-500 transition-all" placeholder="搜索单号、商户名、经办人或包含的食材..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
               <div className="space-y-3">
-                 {orders.filter(o => o.type === (activeTab === 'inbound' ? 'IN' : 'OUT') && (o.id.includes(searchTerm) || o.items.some((i: any) => i.name.includes(searchTerm)))).map(o => (
+                 {orders.filter(o => o.type === (activeTab === 'inbound' ? 'IN' : 'OUT') && (o.id.includes(searchTerm) || o.items.some((i) => i.name.includes(searchTerm)))).map(o => (
                     <button key={o.id} onClick={() => handleOpenModal('detail', o)} className="w-full glass p-5 rounded-[28px] border border-white/5 hover:border-indigo-500/30 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 text-left group">
                        <div className="flex items-center gap-4"><div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-black ${o.type === 'IN' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-cyan-500/10 text-cyan-400'}`}><i data-lucide={o.type === 'IN' ? 'shopping-bag' : 'truck'} className="w-6 h-6"></i></div><div><h4 className="font-black text-white">{o.id}</h4><p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">{formatDate(o.date)} · {o.type === 'OUT' ? (customers.find(c => c.id === o.customerId)?.name || '散户') : '补录采购'}</p></div></div>
                        <p className={`text-xl font-black font-mono ${o.type === 'IN' ? 'text-indigo-400' : 'text-cyan-400'}`}>{formatCurrency(o.totalAmount)}</p>
@@ -536,7 +535,7 @@ const App = () => {
                        </div>
 
                        <div className="space-y-2 max-h-[40vh] overflow-y-auto no-scrollbar">
-                          {(selectedItem?.items || [1]).map((_: any, idx: number) => (
+                          {(selectedItem?.items || [1]).map((_, idx) => (
                              <div key={idx} className={`glass p-4 rounded-2xl border border-white/5 grid grid-cols-2 gap-3 transition-all ${idx >= (selectedItem?.items?.length || 0) - 1 ? 'animate-in fade-in slide-in-from-left-4' : ''}`}>
                                 <input name="item_name" defaultValue={_?.name} placeholder="食材品名" className="col-span-2 bg-transparent border-b border-white/5 font-black outline-none text-sm pb-2" />
                                 <div className="space-y-1"><label className="text-[7px] text-slate-600 font-black uppercase">数量</label><input name="item_amount" type="number" step="any" defaultValue={_?.quantity} className="w-full bg-slate-950/50 p-2 rounded-lg text-xs outline-none text-white font-mono" /></div>
@@ -544,7 +543,7 @@ const App = () => {
                                 <div className="col-span-2 space-y-1"><label className="text-[7px] text-slate-600 font-black uppercase">单价 (¥)</label><input name="item_price" type="number" step="any" defaultValue={_?.price} className="w-full bg-slate-950/50 p-2 rounded-lg text-xs outline-none text-white font-mono" /></div>
                              </div>
                           ))}
-                          <button type="button" onClick={() => setSelectedItem((prev: any) => ({ ...prev, items: [...(prev?.items || [{}]), {}] }))} className="w-full py-4 border border-dashed border-white/10 rounded-2xl text-[10px] text-slate-500 font-black uppercase hover:bg-white/5 transition-all">+ 手动新增食材明细</button>
+                          <button type="button" onClick={() => setSelectedItem((prev) => ({ ...prev, items: [...(prev?.items || [{}]), {}] }))} className="w-full py-4 border border-dashed border-white/10 rounded-2xl text-[10px] text-slate-500 font-black uppercase hover:bg-white/5 transition-all">+ 手动新增食材明细</button>
                        </div>
                        <input type="hidden" name="shouldPrint" id="shouldPrintInput" value="false" />
                        <div className="flex gap-2 pt-4">
@@ -574,7 +573,13 @@ const App = () => {
                  <form onSubmit={e => {
                     e.preventDefault();
                     const fd = new FormData(e.currentTarget);
-                    const data = { name: fd.get('name') as string, category: fd.get('category') as string, unit: fd.get('unit') as string, currentStock: parseFloat(fd.get('stock') as string) || 0, minStock: parseFloat(fd.get('min') as string) || 0 };
+                    const data = { 
+                      name: fd.get('name') as string, 
+                      category: fd.get('category') as string, 
+                      unit: fd.get('unit') as string, 
+                      currentStock: parseFloat(fd.get('stock') as string) || 0, 
+                      minStock: parseFloat(fd.get('min') as string) || 0 
+                    };
                     if (selectedItem) setIngredients(prev => prev.map(i => i.id === selectedItem.id ? { ...i, ...data } : i));
                     else setIngredients(prev => [...prev, { id: Date.now().toString(), code: `V${Date.now().toString().slice(-3)}`, ...data }]);
                     setIsModalOpen(false);
@@ -599,9 +604,15 @@ const App = () => {
                  <form onSubmit={e => {
                     e.preventDefault();
                     const fd = new FormData(e.currentTarget);
-                    const data = { name: fd.get('name') as string, phone: fd.get('phone') as string, address: fd.get('address') as string, lat: selectedItem?.lat, lng: selectedItem?.lng };
+                    const data = { 
+                      name: fd.get('name') as string, 
+                      phone: fd.get('phone') as string, 
+                      address: fd.get('address') as string, 
+                      lat: selectedItem?.lat, 
+                      lng: selectedItem?.lng 
+                    };
                     if (selectedItem?.id) setCustomers(prev => prev.map(c => c.id === selectedItem.id ? { ...c, ...data } : c));
-                    else setCustomers(prev => [...prev, { id: Date.now().toString(), ...data, totalDebt: 0 } as any]);
+                    else setCustomers(prev => [...prev, { id: Date.now().toString(), ...data, totalDebt: 0 }]);
                     setIsModalOpen(false);
                  }} className="space-y-5 text-left">
                     <h3 className="text-xl font-black mb-6 uppercase">{selectedItem?.id ? '编辑商户档案' : '录入新商户'}</h3>
@@ -638,7 +649,11 @@ const App = () => {
                  <form onSubmit={e => {
                     e.preventDefault();
                     const fd = new FormData(e.currentTarget);
-                    const data = { name: fd.get('name') as string, role: fd.get('role') as string, password: fd.get('password') as string };
+                    const data = { 
+                      name: fd.get('name') as string, 
+                      role: fd.get('role') as string, 
+                      password: fd.get('password') as string 
+                    };
                     if (selectedItem) setUsers(prev => prev.map(u => u.id === selectedItem.id ? { ...u, ...data } : u));
                     else setUsers(prev => [...prev, { id: Date.now().toString(), ...data }]);
                     setIsModalOpen(false);
@@ -687,7 +702,7 @@ const App = () => {
                <div className="grid grid-cols-2 mb-10 text-sm gap-y-3"><p><b>单据编号:</b> {selectedItem.id}</p><p><b>日期:</b> {formatDate(selectedItem.date)}</p><p><b>经办职员:</b> {users.find(u => u.id === selectedItem.operatorId)?.name}</p><p><b>{selectedItem.type === 'OUT' ? '收货单位:' : '供货说明:'}</b> {selectedItem.type === 'OUT' ? customers.find(c => c.id === selectedItem.customerId)?.name : '采购补录'}</p></div>
                <table className="w-full mb-10 border-collapse border-2 border-black text-sm">
                   <thead><tr className="bg-gray-100"><th className="border-2 border-black p-3 text-left">品名</th><th className="border-2 border-black p-3 text-center">数量</th><th className="border-2 border-black p-3 text-right">单价</th><th className="border-2 border-black p-3 text-right">金额</th></tr></thead>
-                  <tbody>{selectedItem.items.map((item: any) => ( <tr key={item.id}><td className="border-2 border-black p-3 font-bold">{item.name}</td><td className="border-2 border-black p-3 text-center">{item.quantity}{item.unit}</td><td className="border-2 border-black p-3 text-right">{formatCurrency(item.price)}</td><td className="border-2 border-black p-3 text-right font-bold">{formatCurrency(item.quantity * item.price)}</td></tr> ))}</tbody>
+                  <tbody>{selectedItem.items.map((item) => ( <tr key={item.id}><td className="border-2 border-black p-3 font-bold">{item.name}</td><td className="border-2 border-black p-3 text-center">{item.quantity}{item.unit}</td><td className="border-2 border-black p-3 text-right">{formatCurrency(item.price)}</td><td className="border-2 border-black p-3 text-right font-bold">{formatCurrency(item.quantity * item.price)}</td></tr> ))}</tbody>
                </table>
                <div className="text-right text-3xl font-black border-t-2 border-black pt-4">合计金额: {formatCurrency(selectedItem.totalAmount)}</div>
                <div className="mt-32 flex justify-between text-sm px-4"><p>库管/经办人签字: __________________</p><p>客户/收货人签字: __________________</p></div>
