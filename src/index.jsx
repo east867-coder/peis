@@ -2,18 +2,36 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from '@vercel/kv';
-// src/index.jsx
 
-function App() {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [ingredients, setIngredients] = useState(INITIAL_MATERIALS); // 初始值作为回退
-  const [orders, setOrders] = useState([]);
-  const [isSyncing, setIsSyncing] = useState(false); // 新增：用于显示同步状态
-// 初始化云端数据库客户端
+// --- 1. 云端数据库初始化 (放在函数外面) ---
 const kv = createClient({
   url: import.meta.env.VITE_KV_REST_API_URL,
   token: import.meta.env.VITE_KV_REST_API_TOKEN,
 });
+
+// --- 2. 常量定义 (放在函数外面) ---
+const CATEGORIES = ['全部', '蔬菜', '肉类', '海鲜', '调料', '主食', '水果', '其他'];
+const INITIAL_MATERIALS = [ /* 你的初始数据... */ ];
+
+// --- 3. 组件主体 ---
+function App() {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [ingredients, setIngredients] = useState(INITIAL_MATERIALS);
+  const [orders, setOrders] = useState([]);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  // 这里放你的 useEffect 同步逻辑...
+
+  return (
+    // 这里是你的 HTML/JSX 代码...
+    <div>内容...</div>
+  );
+} // <--- 确保这里有关闭 App 函数的大括号
+
+// --- 4. 渲染入口 ---
+const container = document.getElementById('root');
+const root = createRoot(container);
+root.render(<App />);
 // --- 常量与初始数据 ---
 
 const CATEGORIES = ['全部', '蔬菜', '肉类', '海鲜', '调料', '主食', '水果', '其他'];
