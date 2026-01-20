@@ -2,7 +2,13 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from '@vercel/kv';
+// src/index.jsx
 
+function App() {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [ingredients, setIngredients] = useState(INITIAL_MATERIALS); // 初始值作为回退
+  const [orders, setOrders] = useState([]);
+  const [isSyncing, setIsSyncing] = useState(false); // 新增：用于显示同步状态
 // 初始化云端数据库客户端
 const kv = createClient({
   url: import.meta.env.VITE_KV_REST_API_URL,
