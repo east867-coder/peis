@@ -169,27 +169,47 @@ const App = () => {
   const [showAiTextInput, setShowAiTextInput] = useState(false);
   const [tempPhotos, setTempPhotos] = useState([]);
 
+  // 逻辑 A：初始化加载 —— 从云端拉取
   useEffect(() => {
-    try {
-      const si = localStorage.getItem('sc_ingredients');
-      const so = localStorage.getItem('sc_orders');
-      const sc = localStorage.getItem('sc_customers');
-      const su = localStorage.getItem('sc_users');
-      if (si) setIngredients(JSON.parse(si));
-      if (so) setOrders(JSON.parse(so));
-      if (sc) setCustomers(JSON.parse(sc));
-      if (su) setUsers(JSON.parse(su));
-    } catch (e) {}
+    const fetchCloudData = async () => {
+      setIsSyncing(true);
+      try {
+        const [cloudIngredients, cloudOrders] = await Promise.all([
+          kv.get('materials'),
+          kv.get('orders')
+        ]);
+
+        if (cloudIngredients) setIngredients(cloudIngredients);
+        if (cloudOrders) setOrders(cloudOrders);
+        console.log("✅ 云端数据加载成功");
+      } catch (err) {
+        console.error("❌ 云端拉取失败，使用本地默认值", err);
+      } finally {
+        setIsSyncing(false);
+      }
+    };
+    fetchCloudData();
   }, []);
 
+  // 逻辑 B：自动保存 —— 监听数据变化并推送到云端
   useEffect(() => {
-    localStorage.setItem('sc_ingredients', JSON.stringify(ingredients));
-    localStorage.setItem('sc_orders', JSON.stringify(orders));
-    localStorage.setItem('sc_customers', JSON.stringify(customers));
-    localStorage.setItem('sc_users', JSON.stringify(users));
-    if (window.lucide) window.lucide.createIcons();
-  }, [ingredients, orders, customers, users, activeTab, isModalOpen]);
+    const saveData = async () => {
+      // 只有当数据不是初始默认状态时才保存，防止覆盖云端已有的数据
+      if (ingredients !== INITIAL_MATERIALS) {
+        try {
+          await kv.set('materials', ingredients);
+          await kv.set('orders', orders);
+          console.log("☁️ 数据已同步至云端");
+        } catch (err) {
+          console.error("❌ 同步至云端失败", err);
+        }
+      }
+    };
 
+    // 使用防抖或简单的延迟，避免频繁触发 API 请求
+    const timer = setTimeout(saveData, 1000); 
+    return () => clearTimeout(timer);
+  }, [ingredients, orders]);
   const handleOpenModal = (type, data) => {
     setModalType(type);
     setSelectedItem(data || null);
