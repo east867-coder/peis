@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { createClient } from '@vercel/kv';
 
+// 初始化云端数据库客户端
+const kv = createClient({
+  url: import.meta.env.VITE_KV_REST_API_URL,
+  token: import.meta.env.VITE_KV_REST_API_TOKEN,
+});
 // --- 常量与初始数据 ---
 
 const CATEGORIES = ['全部', '蔬菜', '肉类', '海鲜', '调料', '主食', '水果', '其他'];
